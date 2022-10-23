@@ -26,48 +26,43 @@
 
 <script>
 export default {
-  data () {
+  data() {
     return {
       str: "",
     };
-  },
-  mounted(){
-    let exp = 'a+b*(c^d-e)^(f+g*h)-i'
-    console.log(this.infixToPostfix(exp))
   },
   methods: {
     getNumber(e) {
       this.str += e.target.innerText;
     },
     getResult() {
-      const arr = [];
-      let num = "";
-      for (let i = 0; i < this.str.length; i++) {
-        const c = this.str[i];
-        if (c === "+" || c === "-" || c === "*" || c === "/") {
-          arr.push(num);
-          arr.push(c);
-          num = "";
-        } else {
-          num += c;
-        }
-      }
-      arr.push(num);
-      this.str = arr[0];
-      for (let i = 1; i < arr.length; i += 2) {
-        if (arr[i] === "+") {
-          this.str = parseInt(this.str) + parseInt(arr[i + 1]);
-        } else if (arr[i] === "-") {
-          this.str = parseInt(this.str) - parseInt(arr[i + 1]);
-        } else if (arr[i] === "*") {
-          this.str = parseInt(this.str) * parseInt(arr[i + 1]);
-        } else if (arr[i] === "/") {
-          this.str = parseInt(this.str) / parseInt(arr[i + 1]);
-        }
-      }
+      let postfix = this.infixToPostfix(this.str) 
+      this.str = this.evalRPN(postfix);
     },
     clearNumber() {
       this.str = "";
+    },
+    evalRPN(tokens) {
+      let stack = [];
+      for (let i = 0; i < tokens.length; i++) {
+        let token = tokens[i];
+        if (token === "+" || token === "-" || token === "*" || token === "/") {
+          let num1 = BigInt(stack.pop());
+          let num2 = BigInt(stack.pop());
+          if (token === "+") {
+            stack.push(num1 + num2);
+          } else if (token === "*") {
+            stack.push(num1 * num2);
+          } else if (token === "-") {
+            stack.push(num2 - num1);
+          } else if (token === "/") {
+            stack.push(num2 / num1);
+          }
+        } else {
+          stack.push(token);
+        }
+      }
+      return stack[0];
     },
     infixToPostfix(s) {
       let st = [];
@@ -88,7 +83,10 @@ export default {
           }
           st.pop();
         } else {
-          while (st.length !== 0 && this.prec(s[i]) <= this.prec(st[st.length - 1])) {
+          while (
+            st.length !== 0 &&
+            this.prec(s[i]) <= this.prec(st[st.length - 1])
+          ) {
             result += st.pop();
           }
           st.push(c);
